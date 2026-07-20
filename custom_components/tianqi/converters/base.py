@@ -50,7 +50,7 @@ class NumberSensorConv(SensorConv):
             val = float(f'{value}'.strip().replace(self.unit, ''))
             val = round(val, self.precision)
         except (TypeError, ValueError):
-            val = None
+            return  # keep previous value, avoid resetting HA for: duration timer
         payload[self.attr] = val
 
 
