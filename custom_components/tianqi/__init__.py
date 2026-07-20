@@ -40,6 +40,7 @@ SUPPORTED_PLATFORMS = [
     Platform.BINARY_SENSOR,
 ]
 HTTP_REFERER = base64.b64decode('aHR0cHM6Ly9tLndlYXRoZXIuY29tLmNuLw==').decode()
+DEFAULT_DOMAIN = 'weather.com.cn'
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
 
 
@@ -248,7 +249,7 @@ class TianqiClient:
                 name='summary',
                 config_entry=self.entry,
                 update_method=self.update_summary_and_entities,
-                update_interval=timedelta(seconds=60),
+                update_interval=timedelta(minutes=10),
             ),
             DataUpdateCoordinator(
                 hass, _LOGGER,
@@ -430,6 +431,11 @@ class TianqiClient:
         for rmh in self._remove_listeners:
             rmh()
         self._remove_listeners = []
+        for coord in self.coordinators:
+            try:
+                await coord.async_shutdown()
+            except Exception:
+                pass
 
     @property
     def device_info(self):
@@ -487,6 +493,7 @@ class TianqiClient:
             **inf,
         })
 
+    @aiohttp_retry()
     async def search_areas(self, name):
         api = self.api_url('search', node='toy1')
         pms = {'cityname': name}
@@ -565,7 +572,7 @@ class TianqiClient:
 
         if match := re.search(r'var alarmDZ\w*\s*=\s*({.*})', txt, re.DOTALL):
             self.data['alarms'] = (json.loads(match.group(1)) or {}).get('w') or []
-            self.push_state(self.decode(self.data))
+            self.push_state(self.decode({'alarms': self.data['alarms']}))
 
         return self.data
 
@@ -629,6 +636,12 @@ class TianqiClient:
         api = self.api_url('weather/%s.shtml' % kwargs.get('area_id', self.area_id), 'www')
         res = await self.http.get(api, allow_redirects=False, verify_ssl=False)
         txt = await res.text()
+        if not txt:
+            raise IntegrationError(f'Empty response from: {api}')
+        if res.status != 200:
+            self.data['observe_text'] = txt
+        else:
+            self.data.pop('observe_text', None)
 
         fmt = '%Y%m%d%H%M'
         dat = {}

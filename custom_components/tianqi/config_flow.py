@@ -6,7 +6,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import CONF_DOMAIN
 
-from . import TianqiClient, DOMAIN
+from . import TianqiClient, DOMAIN, DEFAULT_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 CONF_SEARCH = 'search'
@@ -73,7 +73,7 @@ class TianqiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         latest_domain = self.hass.data[DOMAIN].get('latest_domain')
         schema = {
-            vol.Required(CONF_DOMAIN, default=user_input.get(CONF_DOMAIN, latest_domain)): str,
+            vol.Required(CONF_DOMAIN, default=user_input.get(CONF_DOMAIN, latest_domain or DEFAULT_DOMAIN)): str,
             vol.Optional(CONF_SEARCH, default=''): str,
             **schema,
             vol.Optional('caiyun', default=user_input.get('caiyun', False)): bool,
@@ -116,7 +116,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id='init',
             data_schema=vol.Schema({
-                vol.Required(CONF_DOMAIN, default=defaults.get(CONF_DOMAIN)): str,
+                vol.Required(CONF_DOMAIN, default=defaults.get(CONF_DOMAIN) or DEFAULT_DOMAIN): str,
                 vol.Optional('caiyun', default=defaults.get('caiyun', False)): bool,
             }),
             description_placeholders={'tip': self.context.pop('last_error', '')},

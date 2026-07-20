@@ -91,16 +91,32 @@ class WeatherEntity(BaseEntity):
         dataSK = dat.get('dataSK') or {}
         code = dataSK.get('weathercode', '')
         if code not in ConditionCodes.__members__:
+            _LOGGER.warning('Unknown weather code: %s, skipping weather update', code)
             return
         self._attr_condition = ConditionCodes[code].value[0]
-        self._attr_humidity = float(dataSK.get('sd', '').replace('%', ''))
-        self._attr_native_pressure = float(dataSK.get('qy', ''))
+        try:
+            self._attr_humidity = float(dataSK.get('sd', '').replace('%', ''))
+        except (TypeError, ValueError):
+            pass
+        try:
+            self._attr_native_pressure = float(dataSK.get('qy', ''))
+        except (TypeError, ValueError):
+            pass
         self._attr_native_pressure_unit = UnitOfPressure.HPA
-        self._attr_native_temperature = float(dataSK.get('temp', ''))
+        try:
+            self._attr_native_temperature = float(dataSK.get('temp', ''))
+        except (TypeError, ValueError):
+            pass
         self._attr_native_temperature_unit = UnitOfTemperature.CELSIUS
-        self._attr_native_wind_speed = float(dataSK.get('wse', '').replace('km/h', ''))
+        try:
+            self._attr_native_wind_speed = float(dataSK.get('wse', '').replace('km/h', ''))
+        except (TypeError, ValueError):
+            pass
         self._attr_native_wind_speed_unit = UnitOfSpeed.KILOMETERS_PER_HOUR
-        self._attr_native_visibility = float(dataSK.get('njd', '').replace('km', ''))
+        try:
+            self._attr_native_visibility = float(dataSK.get('njd', '').replace('km', ''))
+        except (TypeError, ValueError):
+            pass
         self._attr_native_visibility_unit = UnitOfLength.KILOMETERS
         self._attr_wind_bearing = dataSK.get('WD') or dataSK.get('wde')
         self._attr_native_precipitation_unit = UnitOfLength.MILLIMETERS
