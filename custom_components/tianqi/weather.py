@@ -90,6 +90,9 @@ class WeatherEntity(BaseEntity):
         dataZS = dat.get('dataZS') or {}
         dataSK = dat.get('dataSK') or {}
         code = dataSK.get('weathercode', '')
+        if not code:
+            _LOGGER.debug('Empty weather code in dataSK, skipping weather update')
+            return
         if code not in ConditionCodes.__members__:
             _LOGGER.warning('Unknown weather code: %s, skipping weather update', code)
             return
