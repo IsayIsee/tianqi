@@ -643,7 +643,7 @@ class TianqiClient:
         else:
             self.data.pop('observe_text', None)
 
-        fmt = '%Y%m%d%H%M'
+        fmt = '%Y%m%d%H%M%S'
         dat = {}
         if match := re.search(r'observe24h_data\s*=\s*({.*?})\s*;', txt, re.DOTALL):
             rdt = (json.loads(match.group(1)) or {}).get('od') or {}
