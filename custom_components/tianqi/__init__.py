@@ -643,14 +643,15 @@ class TianqiClient:
         else:
             self.data.pop('observe_text', None)
 
-        fmt = '%Y%m%d%H%M%S'
+        fmt = '%Y%m%d%H%M'
         dat = {}
         if match := re.search(r'observe24h_data\s*=\s*({.*?})\s*;', txt, re.DOTALL):
             rdt = (json.loads(match.group(1)) or {}).get('od') or {}
             lst = rdt.get('od2') or []
             lst.reverse()
             try:
-                stm = datetime.strptime(rdt.get('od0', ''), fmt)
+                od0 = rdt.get('od0', '')
+                stm = datetime.strptime(od0[:12], fmt)
             except ValueError as exc:
                 dat = {
                     'error': str(exc),
